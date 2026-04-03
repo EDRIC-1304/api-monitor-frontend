@@ -1,18 +1,28 @@
 const API_BASE = "http://localhost:5000/api";
 
 async function apiRequest(endpoint, method = "GET", body = null) {
+  const token = localStorage.getItem("token");
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, {
       method,
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
       },
       body: body ? JSON.stringify(body) : null,
     });
 
+    if (res.status === 401 || res.status === 403) {
+        window.location.href = "auth.html";
+        return;
+    }
     return await res.json();
   } catch (error) {
-    console.error("API Error:", error);
-    return { success: false, error: "Server not reachable" };
+    return { success: false, error: "Connection lost" };
   }
+}
+
+function logout() {
+    localStorage.removeItem("token");
+    window.location.href = "auth.html";
 }

@@ -1,75 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+
+:root {
+    --bg: #030712;
+    --card: rgba(17, 24, 39, 0.7);
+    --neon-purple: #8b5cf6;
+    --neon-blue: #0ea5e9;
+    --neon-pink: #f472b6;
+    --text: #f8fafc;
+}
+
 body {
-  margin: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background: radial-gradient(circle at top, #1e1b4b, #020617);
-  color: #e2e8f0;
+    background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #030712 100%);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
 }
 
-/* Layout */
-.container {
-  padding: 40px;
+.glass {
+    background: var(--card);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
 
-/* Grid */
-.grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+.btn-nebula {
+    background: linear-gradient(135deg, var(--neon-purple), var(--neon-blue));
+    border: none; color: white; font-weight: 600;
+    padding: 12px 24px; border-radius: 12px;
+    transition: all 0.3s ease;
 }
 
-/* Cards */
-.card {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 20px;
-  border-radius: 16px;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 0 25px rgba(0,0,0,0.4);
+.btn-nebula:hover {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+    transform: translateY(-2px);
 }
 
-/* Inputs */
+.nav-link { color: rgba(255,255,255,0.7); transition: 0.3s; }
+.nav-link:hover { color: var(--neon-blue); }
+
+/* Table UI */
+.custom-table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
+.custom-table tr { background: rgba(255,255,255,0.03); border-radius: 12px; transition: 0.3s; }
+.custom-table tr:hover { background: rgba(255,255,255,0.08); }
+.custom-table td, .custom-table th { padding: 15px; border: none; }
+.custom-table th { text-transform: uppercase; font-size: 11px; letter-spacing: 1px; color: var(--neon-blue); }
+
+.status-badge {
+    padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold;
+}
+.status-200 { background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }
+.status-err { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+
 input, select {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  background: #020617;
-  border: 1px solid #334155;
-  color: white;
-  border-radius: 8px;
+    background: rgba(0,0,0,0.2) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: white !important;
+    padding: 12px !important;
 }
 
-/* Button */
-.btn-custom {
-  margin-top: 15px;
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 8px;
-  background: linear-gradient(45deg, #7c3aed, #3b82f6);
-  color: white;
-  cursor: pointer;
+/* Status Indicator Styling */
+.status-pill-container {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 16px;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(5px);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
-/* Table */
-table {
-  width: 100%;
-  margin-top: 20px;
-  border-collapse: collapse;
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 10px;
+    display: inline-block;
 }
 
-th, td {
-  padding: 10px;
-  border-bottom: 1px solid #334155;
-  text-align: left;
+/* Pulsing animation for errors */
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(244, 114, 182, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(244, 114, 182, 0); }
 }
 
-/* Auth Page */
-.auth-container {
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.dot-stable {
+    background-color: #22d3ee;
+    box-shadow: 0 0 10px #22d3ee;
 }
 
-.auth-card {
-  width: 300px;
+.dot-unstable {
+    background-color: #f472b6;
+    animation: pulse-red 2s infinite;
 }
+
+.text-stable { color: #22d3ee; }
+.text-unstable { color: #f472b6; }

@@ -1,3 +1,5 @@
+let allLogs = [];
+let showingFullList = false;
 let requestsChart, errorsChart, latencyChart;
 
 async function loadDashboard() {
@@ -6,157 +8,182 @@ async function loadDashboard() {
   await checkPattern();
 }
 
-// ================= GRAPH DATA =================
-
 async function loadGraphs() {
   const res = await apiRequest("/graphs");
-
-  if (!res.success) {
-    console.error("Graph load failed");
-    return;
-  }
-
+  if (!res.success) return;
   const { requests, errors, latency } = res.data;
-
   renderRequestsChart(requests);
   renderErrorsChart(errors);
   renderLatencyChart(latency);
 }
 
-// ================= CHARTS =================
-
-function getCommonChartOptions(label) {
-  return {
-    responsive: true,
-    plugins: {
-      legend: {
-        labels: {
-          color: "#e2e8f0"
-        }
-      }
-    },
-    scales: {
-      x: {
-        ticks: { color: "#94a3b8" }
-      },
-      y: {
-        ticks: { color: "#94a3b8" }
-      }
-    }
-  };
-}
-
-function renderRequestsChart(data) {
-  const ctx = document.getElementById("requestsChart").getContext("2d");
-
-  if (requestsChart) requestsChart.destroy();
-
-  requestsChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: data.map(d => d.date),
-      datasets: [{
-        label: "Requests",
-        data: data.map(d => Number(d.count)),
-        borderWidth: 2,
-        tension: 0.3
-      }]
-    },
-    options: getCommonChartOptions()
-  });
-}
-
-function renderErrorsChart(data) {
-  const ctx = document.getElementById("errorsChart").getContext("2d");
-
-  if (errorsChart) errorsChart.destroy();
-
-  errorsChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: data.map(d => d.date),
-      datasets: [{
-        label: "Errors",
-        data: data.map(d => Number(d.count)),
-        borderWidth: 2,
-        tension: 0.3
-      }]
-    },
-    options: getCommonChartOptions()
-  });
-}
-
-function renderLatencyChart(data) {
-  const ctx = document.getElementById("latencyChart").getContext("2d");
-
-  if (latencyChart) latencyChart.destroy();
-
-  latencyChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: data.map(d => d.date),
-      datasets: [{
-        label: "Latency (ms)",
-        data: data.map(d => Number(d.avg_latency)),
-        borderWidth: 2,
-        tension: 0.3
-      }]
-    },
-    options: getCommonChartOptions()
-  });
-}
-
-// ================= LOG TABLE =================
-
+// ================= LOG TABLE LOGIC =================
 async function loadLogs() {
   const res = await apiRequest("/logs");
-
   if (!res.success) return;
 
+  allLogs = res.data;
+  renderLogTable();
+}
+
+function renderLogTable() {
   const table = document.getElementById("logTable");
   table.innerHTML = "";
+  
+  // Only show 5 logs initially, or all if user clicked "View All"
+  const logsToDisplay = showingFullList ? allLogs : allLogs.slice(0, 5);
 
-  res.data.forEach(log => {
+  logsToDisplay.forEach(log => {
+    const isError = log.status >= 400;
     const row = document.createElement("tr");
-
-    // UI improvement (instead of inline color)
-    if (log.status >= 400) {
-      row.classList.add("error");
-    } else {
-      row.classList.add("success");
-    }
-
+    row.className = "log-row";
     row.innerHTML = `
-      <td>${log.url}</td>
       <td>
-        <span class="badge ${log.status >= 400 ? "badge-error" : "badge-success"}">
-          ${log.status}
-        </span>
+        <div class="small text-secondary">${log.method}</div>
+        <div class="fw-bold text-white">${log.url}</div>
       </td>
-      <td>${log.response_time} ms</td>
-      <td>${log.retry ? "Yes" : "No"}</td>
-      <td>${log.retry_success ? "Yes" : "No"}</td>
-      <td>${log.error || "-"}</td>
+      <td><span class="status-badge ${isError ? 'status-err' : 'status-200'}">${log.status}</span></td>
+      <td class="text-info fw-bold">${log.response_time}ms</td>
+      <td>
+         ${log.retry ? '<span class="badge bg-primary">RETRY</span>' : '<span class="text-muted">-</span>'}
+         ${log.retry_success ? '<span class="badge bg-success ms-1">FIXED</span>' : ''}
+      </td>
+      <td class="small text-secondary">${log.error || "Stable Connection"}</td>
     `;
-
     table.appendChild(row);
   });
 }
 
-// ================= PATTERN =================
+function toggleLogs() {
+    showingFullList = !showingFullList;
+    const btn = document.getElementById("viewAllBtn");
+    btn.innerText = showingFullList ? "Show Less" : "View All Logs";
+    renderLogTable();
+}
+
+// ================= CHART RENDERING =================
+// ================= REQUESTS CHART =================
+function renderRequestsChart(data) {
+    const ctx = document.getElementById("requestsChart").getContext("2d");
+    if (requestsChart) requestsChart.destroy();
+    
+    // Safety check: if no data, don't try to render
+    if (!data || data.length === 0) return;
+
+    requestsChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: data.map(d => d.date),
+            datasets: [{
+                label: "Requests",
+                data: data.map(d => Number(d.count)),
+                borderColor: '#8b5cf6', // Purple
+                backgroundColor: 'rgba(139, 92, 246, 0.2)', // Purple Glow
+                fill: true,
+                tension: 0.4,
+                borderWidth: 2,
+                pointRadius: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { display: false, beginAtZero: true },
+                x: { display: false }
+            }
+        }
+    });
+}
+
+// ================= ERRORS CHART =================
+function renderErrorsChart(data) {
+    const ctx = document.getElementById("errorsChart").getContext("2d");
+    if (errorsChart) errorsChart.destroy();
+    
+    if (!data || data.length === 0) return;
+
+    errorsChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: data.map(d => d.date),
+            datasets: [{
+                label: "Errors",
+                data: data.map(d => Number(d.count)),
+                borderColor: '#f472b6', // Pink
+                backgroundColor: 'rgba(244, 114, 182, 0.2)', // Pink Glow
+                fill: true,
+                tension: 0.4,
+                borderWidth: 2,
+                pointRadius: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { display: false, beginAtZero: true },
+                x: { display: false }
+            }
+        }
+    });
+}
+
+// ================= LATENCY CHART =================
+function renderLatencyChart(data) {
+    const ctx = document.getElementById("latencyChart").getContext("2d");
+    if (latencyChart) latencyChart.destroy();
+    
+    if (!data || data.length === 0) return;
+
+    latencyChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: data.map(d => d.date),
+            datasets: [{
+                label: "Latency (ms)",
+                data: data.map(d => Number(d.avg_latency)),
+                borderColor: '#0ea5e9', // Cyan
+                backgroundColor: 'rgba(14, 165, 233, 0.2)', // Cyan Glow
+                fill: true,
+                tension: 0.4,
+                borderWidth: 2,
+                pointRadius: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { display: false, beginAtZero: true },
+                x: { display: false }
+            }
+        }
+    });
+}
 
 async function checkPattern() {
   const res = await apiRequest("/pattern");
-
   if (!res.success) return;
 
   const alertBox = document.getElementById("patternAlert");
-
+  
   if (res.unstable) {
-    alertBox.innerText = "⚠️ API UNSTABLE: Last 5 requests failed";
-    alertBox.style.color = "#ef4444";
+    alertBox.innerHTML = `
+      <div class="status-pill-container">
+        <span class="status-dot dot-unstable"></span>
+        <span class="text-unstable">System Unstable: Multiple Failures</span>
+      </div>
+    `;
   } else {
-    alertBox.innerText = "✅ API Stable";
-    alertBox.style.color = "#22c55e";
+    alertBox.innerHTML = `
+      <div class="status-pill-container">
+        <span class="status-dot dot-stable"></span>
+        <span class="text-stable">All Systems Operational</span>
+      </div>
+    `;
   }
 }
