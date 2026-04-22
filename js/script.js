@@ -1,4 +1,4 @@
-const API_BASE = "https://api-monitor-backend-h30u.onrender.com";
+const API_BASE = "https://api-monitor-backend-h30u.onrender.com/api";
 
 async function apiRequest(endpoint, method = "GET", body = null) {
   const token = localStorage.getItem("token");
